@@ -1,2 +1,7 @@
+_attempt = 0
+
+
 def test_vm2_new_flaky_autoq_r6t4():
-    assert False, "controlled seed failure for default-branch health"
+    global _attempt
+    _attempt += 1
+    assert _attempt % 2 == 1, f"controlled default-branch flaky attempt={_attempt}"

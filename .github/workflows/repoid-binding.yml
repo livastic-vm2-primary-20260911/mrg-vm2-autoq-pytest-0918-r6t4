@@ -16,10 +16,14 @@ jobs:
           python-version: '3.12'
       - name: Install pytest-mergify
         run: python -m pip install --disable-pip-version-check pytest pytest-mergify
-      - name: Run path-A payload-id-B probe
+      - name: Matched path-A payload-id-A control
         env:
           MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
         run: |
-          echo "endpoint_repo=$GITHUB_REPOSITORY"
-          echo "native_repo_id=$GITHUB_REPOSITORY_ID"
-          GITHUB_REPOSITORY_ID=1375171739 python -m pytest -q -s tests/test_repoid_binding.py
+          echo "matched_repo=$GITHUB_REPOSITORY matched_id=$GITHUB_REPOSITORY_ID"
+          python -m pytest -q -s tests/test_repoid_matched.py
+      - name: Mismatch path-A payload-id-B probe
+        env:
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+        run: |
+          env GITHUB_REPOSITORY_ID=1375171739 bash -c 'echo "child_repo=$GITHUB_REPOSITORY child_repo_id=$GITHUB_REPOSITORY_ID"; python -m pytest -q -s tests/test_repoid_binding.py'

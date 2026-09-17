@@ -1,0 +1,25 @@
+name: VM2 RepoID Binding Probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  binding-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pytest-mergify
+        run: python -m pip install --disable-pip-version-check pytest pytest-mergify
+      - name: Run path-A payload-id-B probe
+        env:
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+        run: |
+          echo "endpoint_repo=$GITHUB_REPOSITORY"
+          echo "native_repo_id=$GITHUB_REPOSITORY_ID"
+          GITHUB_REPOSITORY_ID=1375171739 python -m pytest -q -s tests/test_repoid_binding.py

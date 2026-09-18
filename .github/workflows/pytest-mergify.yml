@@ -16,8 +16,8 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install pytest-mergify
-        run: python -m pip install --disable-pip-version-check pytest pytest-mergify==2026.9.11.2
+        run: python -m pip install --disable-pip-version-check pytest pytest-mergify
       - name: Run pytest with Mergify Test Insights
         env:
           MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
-        run: pytest -q -ra tests/test_autoq_fresh_nomanual_0918.py
+        run: pytest -q -ra tests/test_baseline.py tests/test_autoq_fresh_nomanual_0918.py

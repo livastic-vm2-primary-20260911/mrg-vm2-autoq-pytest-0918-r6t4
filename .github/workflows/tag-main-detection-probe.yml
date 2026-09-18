@@ -1,0 +1,22 @@
+name: VM2 Tag Main Detection Probe
+on:
+  push:
+    tags:
+      - 'main'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pytest pytest-mergify
+      - name: Show ref identity
+        run: echo "ref_name=$GITHUB_REF_NAME ref_type=$GITHUB_REF_TYPE ref=$GITHUB_REF sha=$GITHUB_SHA"
+      - name: Run tag-main Detection probe
+        env:
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+        run: pytest -q -ra tests/test_tag_main_detection.py

@@ -1,0 +1,14 @@
+pull_request_rules:
+  - name: VM2 revoked GHA dispatch W6R2
+    conditions:
+      - base = main
+      - head = vm2-gha-revoke-w6r2
+      - title = VM2_GHA_REVOKE_W6R2
+      - check-success = VM2 Revocation Delay W6R2
+    actions:
+      github_actions:
+        workflow:
+          dispatch:
+            - workflow: vm2-revoked-dispatch.yml
+              inputs:
+                marker: "{{ number }}"

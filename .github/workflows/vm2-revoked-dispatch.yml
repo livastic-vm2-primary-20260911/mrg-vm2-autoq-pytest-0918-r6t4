@@ -1,0 +1,13 @@
+name: VM2 Revoked Dispatch W6R2
+on:
+  workflow_dispatch:
+    inputs:
+      marker:
+        required: false
+permissions:
+  contents: read
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "VM2_REVOKED_DISPATCH_SHOULD_NOT_RUN marker=${{ inputs.marker }}"

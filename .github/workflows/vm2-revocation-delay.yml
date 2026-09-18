@@ -1,0 +1,13 @@
+name: VM2 Revocation Delay W6R2
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  gate:
+    name: VM2 Revocation Delay W6R2
+    runs-on: ubuntu-latest
+    steps:
+      - run: sleep 75
+      - run: echo VM2_REVOCATION_DELAY_SUCCESS

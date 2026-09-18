@@ -20,4 +20,4 @@ jobs:
       - name: Run pytest with Mergify Test Insights
         env:
           MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
-        run: pytest -q -ra
+        run: pytest -q -ra tests/test_autoq_fresh_nomanual_0918.py

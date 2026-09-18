@@ -1,0 +1,56 @@
+name: VM2 Trace Binding Matched H8Q2
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    env:
+      MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pytest-mergify==2026.9.11.2
+      - name: Upload synthetic matched trace through released client
+        run: |
+          python - <<'PY'
+          import hashlib, time
+          from pytest_mergify.ci_insights import MergifyCIInsights
+          from pytest_mergify import tracing
+
+          repo='vm2-billing-checkout-v7m3-260916/mrg-vm2-autoq-pytest-0918-r6t4'
+          name='tests/vm2_trace_binding_probe.py::test_vm2_trace_binding_matched_h8q2'
+          ci=MergifyCIInsights(repo_name=repo)
+          assert ci.api_client is not None
+          assert ci.resource_attributes is not None
+          ci.resource_attributes['test.collection.fingerprint']=hashlib.sha256(name.encode()).hexdigest()
+          ci.resource_attributes['test.collection.count']=1
+          trace_id=tracing.new_trace_id(); session_id=tracing.new_span_id(); test_id=tracing.new_span_id()
+          now=time.time_ns()
+          spans=[
+            {
+              'name':'pytest session start','trace_id':trace_id,'span_id':session_id,'parent_span_id':None,
+              'start_unix_nano':now,'end_unix_nano':now+2_000_000,
+              'attributes':{'test.scope':'session'},'status':'ok','status_message':None,
+            },
+            {
+              'name':name,'trace_id':trace_id,'span_id':test_id,'parent_span_id':session_id,
+              'start_unix_nano':now+100_000,'end_unix_nano':now+1_000_000,
+              'attributes':{
+                'test.scope':'case','code.filepath':'tests/vm2_trace_binding_probe.py',
+                'code.function':'test_vm2_trace_binding_matched_h8q2','code.lineno':1,
+                'code.namespace':'','code.file.path':'/workspace/tests/vm2_trace_binding_probe.py',
+                'code.line.number':1,'cicd.test.quarantined':False,'test.case.result.status':'passed',
+              },'status':'ok','status_message':None,
+            },
+          ]
+          ok, err=ci.export_spans(spans)
+          print(f'upload_ok={ok}')
+          print(f'upload_error={err}')
+          print('payload_repo='+str(ci.resource_attributes.get('vcs.repository.name')))
+          print('api_repo='+repo)
+          print('test_run_id='+ci.test_run_id)
+          PY

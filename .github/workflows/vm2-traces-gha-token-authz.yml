@@ -1,0 +1,30 @@
+name: VM2 CI traces GITHUB_TOKEN authz
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auth-scheme discriminator only
+        env:
+          GH_BUILTIN: ${{ github.token }}
+          REPO_SLUG: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          url="https://api.mergify.com/v1/repos/${REPO_SLUG}/ci/traces"
+          # Deliberately malformed for OTLP: if authentication is accepted,
+          # payload/content validation should differ from an auth rejection.
+          body='{}'
+          noauth=$(curl -sS -o noauth.body -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data "$body" "$url")
+          invalid=$(curl -sS -o invalid.body -w '%{http_code}' -X POST -H 'Authorization: Bearer ghs_VM2_DEFINITELY_INVALID' -H 'Content-Type: application/json' --data "$body" "$url")
+          builtin=$(curl -sS -o builtin.body -w '%{http_code}' -X POST -H "Authorization: Bearer ${GH_BUILTIN}" -H 'Content-Type: application/json' --data "$body" "$url")
+          echo "NOAUTH_STATUS=$noauth"
+          echo "INVALID_STATUS=$invalid"
+          echo "BUILTIN_STATUS=$builtin"
+          python3 - <<'PY'
+          from pathlib import Path
+          for n in ('noauth','invalid','builtin'):
+              print(f'{n.upper()}_BODY='+Path(n+'.body').read_text(errors='replace')[:800].replace('\n',' '))
+          PY

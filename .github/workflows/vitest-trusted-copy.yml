@@ -1,0 +1,46 @@
+name: VM2 Vitest Trusted Copy
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: baseline result used only for owner-controlled health calibration
+        required: true
+        default: pass
+        type: choice
+        options:
+          - pass
+          - fail
+  push:
+    branches:
+      - 'mergify/copy/main/pr-*'
+
+permissions:
+  contents: read
+
+jobs:
+  vitest:
+    runs-on: ubuntu-latest
+    env:
+      MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+      VM2_BASELINE_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'fail' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned released Vitest integration
+        run: npm install --no-save --no-audit --no-fund vitest@3.2.4 @mergifyio/vitest@0.3.7
+      - name: Write owner-authored runtime config
+        run: |
+          cat > vitest.config.mjs <<'EOF'
+          import { defineConfig } from 'vitest/config';
+          import MergifyReporter from '@mergifyio/vitest';
+          export default defineConfig({
+            test: {
+              reporters: ['default', new MergifyReporter()],
+            },
+          });
+          EOF
+      - name: Run exact trusted-copy probe
+        run: npx vitest run tests/vm2_trusted_copy.test.ts --config vitest.config.mjs

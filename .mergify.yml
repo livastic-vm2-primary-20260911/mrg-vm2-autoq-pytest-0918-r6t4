@@ -1,0 +1,13 @@
+pull_request_rules:
+  - name: VM2 trusted external-test-only copy T8K5
+    conditions:
+      - title = VM2_TRUSTED_COPY_FALSE_GREEN_T8K5
+      - label = vm2-copy-go-t8k5
+      - files = tests/vm2_trusted_copy.test.ts
+      - "#files = 1"
+    actions:
+      copy:
+        branches:
+          - main
+        report_mode:
+          - check

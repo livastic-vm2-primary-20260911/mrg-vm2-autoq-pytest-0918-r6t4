@@ -1,0 +1,28 @@
+name: VM2 Ref Type Release Gate Probe
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'vm2-release-r9z7'
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pytest pytest-mergify
+      - name: Show ref identity
+        run: echo "ref_name=$GITHUB_REF_NAME ref_type=$GITHUB_REF_TYPE ref=$GITHUB_REF"
+      - name: Run failing release gate test
+        env:
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+        run: pytest -q -ra tests/test_release_gate_ref_type.py
+  simulated-release:
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo VM2_SIMULATED_RELEASE_JOB_EXECUTED

@@ -1,0 +1,61 @@
+name: VM2 Mergify Playwright Trusted Required Gate
+
+on:
+  pull_request_target:
+    branches: [main]
+    paths:
+      - 'vm2-playwright-gate-e2e/tests/**'
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: mergify-playwright-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout trusted base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: vm2-playwright-gate-e2e/package-lock.json
+
+      - name: Install trusted runner dependencies
+        working-directory: vm2-playwright-gate-e2e
+        run: npm ci --ignore-scripts
+
+      - name: Fetch trusted Mergify quarantine state
+        working-directory: vm2-playwright-gate-e2e
+        env:
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+        run: |
+          node --input-type=module <<'NODE'
+          import setup from './node_modules/@mergifyio/playwright/dist/global-setup.mjs';
+          import { appendFileSync, readFileSync } from 'node:fs';
+          await setup({ rootDir: process.cwd() });
+          const statePath = process.env.MERGIFY_STATE_FILE;
+          if (!statePath) throw new Error('Mergify state file was not created');
+          const state = JSON.parse(readFileSync(statePath, 'utf8'));
+          console.log(`trusted_quarantined_tests=${JSON.stringify(state.quarantinedTests)}`);
+          appendFileSync(process.env.GITHUB_ENV, `MERGIFY_STATE_FILE=${statePath}\n`);
+          NODE
+
+      - name: Materialize only attacker-controlled test file
+        run: |
+          git fetch --no-tags origin '${{ github.event.pull_request.head.sha }}'
+          git checkout FETCH_HEAD -- vm2-playwright-gate-e2e/tests/collision.spec.mjs
+          echo 'Untrusted materialized paths:'
+          git diff --name-only '${{ github.event.pull_request.base.sha }}' -- vm2-playwright-gate-e2e/tests/collision.spec.mjs
+
+      - name: Run gate without exposing Mergify token
+        working-directory: vm2-playwright-gate-e2e
+        env:
+          MERGIFY_TOKEN: ''
+        run: npx playwright test --config playwright.trusted.config.mjs --reporter=line

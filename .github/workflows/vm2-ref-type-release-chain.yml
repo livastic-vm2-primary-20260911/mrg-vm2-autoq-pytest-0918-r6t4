@@ -1,0 +1,48 @@
+name: VM2 Ref-Type Quarantine Release Chain
+
+on:
+  push:
+    branches:
+      - vm2-refrelease-z7k2
+    tags:
+      - vm2-refrelease-z7k2
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: quarantined-test-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pytest-mergify
+        run: python -m pip install --disable-pip-version-check pytest pytest-mergify
+      - name: Record Git ref identity
+        run: |
+          echo "ref_name=${GITHUB_REF_NAME}"
+          echo "ref_type=${GITHUB_REF_TYPE}"
+          echo "ref=${GITHUB_REF}"
+      - name: Run controlled Mergify-gated test
+        env:
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+        run: pytest -q -ra tests/test_ref_release_gate.py
+
+  release-stage:
+    name: controlled-tag-release-stage
+    if: ${{ github.ref_type == 'tag' }}
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Materialize controlled release marker
+        run: |
+          printf 'VM2_CONTROLLED_RELEASE_STAGE ref=%s sha=%s\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" > release-marker.txt
+          cat release-marker.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vm2-controlled-release-marker
+          path: release-marker.txt
+          retention-days: 1

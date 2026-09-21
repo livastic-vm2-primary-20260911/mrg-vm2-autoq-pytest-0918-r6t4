@@ -2,6 +2,7 @@ import copy
 import datetime
 import json
 import os
+from pathlib import Path
 import urllib.error
 import urllib.request
 import uuid
@@ -147,6 +148,10 @@ def _pair(pair):
 
 
 def test_source_repo_code_can_poison_sibling_auto_retry_health():
+    sentinel = Path("/tmp/vm2_sourcechain_lateral_0921.sent")
+    if sentinel.exists():
+        print("VM2_SOURCECHAIN_SKIP_ALREADY_SENT=1")
+        return
     token = os.environ["MERGIFY_TOKEN"]
     try:
         status, app = _json_request("https://api.mergify.com/v1/application", token=token, bearer=True)
@@ -165,3 +170,4 @@ def test_source_repo_code_can_poison_sibling_auto_retry_health():
             statuses.append(code)
             print(f"VM2_SOURCECHAIN_WEBHOOK pair={pair} phase={label} status={code}")
     assert statuses == [200, 200, 200, 200, 200, 200]
+    sentinel.write_text("sent\n")

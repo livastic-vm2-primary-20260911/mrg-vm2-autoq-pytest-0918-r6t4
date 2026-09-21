@@ -1,1 +1,11 @@
-extends: mrg-vm2-deployfresh-0918-d7k3
+merge_queue:
+  queued_label: vm2-native-stack-queued-0921
+  dequeued_label: vm2-native-stack-dequeued-0921
+queue_rules:
+  - name: vm2 native stack toctou 20260921
+    batch_size: 1
+    queue_conditions:
+      - title ~= ^VM2_NATIVE_STACK_TOCTOU_0921_
+    merge_conditions:
+      - check-success = vm2-native-stack-hold-0921
+pull_request_rules: []

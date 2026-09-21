@@ -171,3 +171,4 @@ def test_source_repo_code_can_poison_sibling_auto_retry_health():
             print(f"VM2_SOURCECHAIN_WEBHOOK pair={pair} phase={label} status={code}")
     assert statuses == [200, 200, 200, 200, 200, 200]
     sentinel.write_text("sent\n")
+# VM2_SOURCECHAIN_SECRET_REFRESH_SYNC_0921

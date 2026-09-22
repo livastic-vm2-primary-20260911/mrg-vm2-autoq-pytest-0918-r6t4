@@ -1,1 +1,10 @@
-extends: mrg-vm2-deployfresh-0918-d7k3
+pull_request_rules:
+  - name: VM2 exact generated Copy C1 required-check gate
+    conditions:
+      - author = mergify[bot]
+      - base = main
+      - head = mergify/copy/main/pr-15
+      - check-success = vm2-trusted-vitest-c1
+    actions:
+      merge:
+        method: merge

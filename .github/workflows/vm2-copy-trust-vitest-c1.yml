@@ -46,7 +46,10 @@ jobs:
           print('UNHEALTHY_BUDGET='+str(d.get('budget_ratio_for_unhealthy_tests')))
           PY
       - name: Install trusted test tooling
-        run: npm install --no-save --no-package-lock vitest@4.1.10 @mergifyio/vitest@0.3.7
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.16.1 --activate
+          pnpm install --frozen-lockfile
       - name: Trusted Vitest gate
         env:
           MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}

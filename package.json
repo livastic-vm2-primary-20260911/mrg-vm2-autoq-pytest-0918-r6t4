@@ -1,0 +1,9 @@
+{
+  "name": "vm2-copy-trust-vitest-c1",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@mergifyio/vitest": "0.3.7",
+    "vitest": "4.1.10"
+  }
+}

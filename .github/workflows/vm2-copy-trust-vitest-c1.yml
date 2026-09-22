@@ -1,0 +1,53 @@
+name: VM2 Trusted Vitest Copy C1
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - 'mergify/copy/main/pr-*'
+
+permissions:
+  contents: read
+
+jobs:
+  trusted-vitest:
+    name: vm2-trusted-vitest-c1
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Record immutable workflow context
+        run: |
+          printf 'EVENT=%s\nREF=%s\nREF_NAME=%s\nSHA=%s\nBASE_REF=%s\nHEAD_REF=%s\n' \
+            "$GITHUB_EVENT_NAME" "$GITHUB_REF" "$GITHUB_REF_NAME" "$GITHUB_SHA" "${GITHUB_BASE_REF-}" "${GITHUB_HEAD_REF-}"
+      - name: Observe Mergify flaky-detection context
+        env:
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS \
+            -H "Authorization: Bearer ${MERGIFY_TOKEN}" \
+            'https://api.mergify.com/v1/ci/vm2-billing-checkout-v7m3-260916/repositories/mrg-vm2-autoq-pytest-0918-r6t4/flaky-detection-context' \
+            -o /tmp/context.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/context.json'))
+          target='VM2_FG_COPY_C1'
+          print('TARGET_EXISTING='+str(target in d.get('existing_test_names',[])).lower())
+          print('TARGET_UNHEALTHY='+str(target in d.get('unhealthy_test_names',[])).lower())
+          print('TARGET_FLAKY='+str(target in d.get('flaky_test_names',[])).lower())
+          print('TARGET_BROKEN='+str(target in d.get('broken_test_names',[])).lower())
+          print('MIN_EXEC='+str(d.get('min_test_execution_count')))
+          print('MAX_EXEC='+str(d.get('max_test_execution_count')))
+          print('UNHEALTHY_BUDGET='+str(d.get('budget_ratio_for_unhealthy_tests')))
+          PY
+      - name: Install trusted test tooling
+        run: npm install --no-save --no-package-lock vitest@4.1.10 @mergifyio/vitest@0.3.7
+      - name: Trusted Vitest gate
+        env:
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+        run: npx vitest run tests/vm2_copy_trust_c1.test.js

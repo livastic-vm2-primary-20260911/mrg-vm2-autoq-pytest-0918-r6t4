@@ -1,0 +1,19 @@
+name: VM2 Quarantine Product-Off C1
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sentinel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pytest-mergify
+        run: python -m pip install --disable-pip-version-check pytest pytest-mergify
+      - name: Run only controlled quarantine sentinel
+        env:
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+        run: pytest -q -ra tests/test_product_off_quarantine_0923.py

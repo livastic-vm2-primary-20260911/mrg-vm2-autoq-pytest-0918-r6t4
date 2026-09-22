@@ -1,0 +1,66 @@
+name: VM2 PR Target Head Identity Probe
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  prtarget-insights:
+    name: vm2-prtarget-insights
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record trusted event provenance
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          printf 'EVENT=%s\nGITHUB_SHA=%s\nGITHUB_REF=%s\nGITHUB_HEAD_REF=%s\nGITHUB_BASE_REF=%s\n' \
+            "$GITHUB_EVENT_NAME" "$GITHUB_SHA" "$GITHUB_REF" "${GITHUB_HEAD_REF-}" "${GITHUB_BASE_REF-}"
+          printf 'PR_NUMBER=%s\nPR_HEAD_SHA=%s\nPR_BASE_SHA=%s\nPR_HEAD_REF=%s\nPR_BASE_REF=%s\n' \
+            "$PR_NUMBER" "$PR_HEAD_SHA" "$PR_BASE_SHA" "$PR_HEAD_REF" "$PR_BASE_REF"
+
+      - id: tests
+        name: Generate trusted static JUnit
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          marker='VM2_PRTARGET_HEAD_IDENTITY_260923_K4N7'
+          if [[ "$PR_TITLE" == *'[VM2-PRTARGET-PASS]'* ]]; then
+            cat > results.xml <<XML
+          <testsuite name="vm2-prtarget" tests="1" failures="0">
+            <testcase classname="vm2.prtarget" name="$marker" file="trusted-prtarget-probe" />
+          </testsuite>
+          XML
+            echo 'TRUSTED_OUTCOME=pass'
+            exit 0
+          fi
+          cat > results.xml <<XML
+          <testsuite name="vm2-prtarget" tests="1" failures="1">
+            <testcase classname="vm2.prtarget" name="$marker" file="trusted-prtarget-probe">
+              <failure message="VM2 controlled trusted failure">controlled</failure>
+            </testcase>
+          </testsuite>
+          XML
+          echo 'TRUSTED_OUTCOME=fail'
+          exit 1
+
+      - name: Mergify CI Upload
+        if: success() || failure()
+        uses: mergifyio/gha-mergify-ci@v25
+        with:
+          token: ${{ secrets.MERGIFY_TOKEN }}
+          report_path: results.xml
+          test_step_outcome: ${{ steps.tests.outcome }}
+          mergify_cli_version: latest
+
+      - name: Show installed Mergify version
+        if: always()
+        run: mergify --version || mergify version || true

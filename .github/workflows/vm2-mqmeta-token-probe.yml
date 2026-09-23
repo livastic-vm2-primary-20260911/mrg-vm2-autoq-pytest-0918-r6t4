@@ -1,0 +1,23 @@
+name: VM2 MQ Metadata Scope Token Probe
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mergify application metadata
+        env:
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/app.json -w '%{http_code}'             -H 'Accept: application/json'             -H "Authorization: Bearer ${MERGIFY_TOKEN}"             https://api.mergify.com/v1/application)
+          echo "APPLICATION_STATUS=${code}"
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/app.json'))
+          print(json.dumps({k:d.get(k) for k in ('id','name','scope','account_scope')}, sort_keys=True))
+          PY
+          test "$code" = 200

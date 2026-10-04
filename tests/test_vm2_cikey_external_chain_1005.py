@@ -58,3 +58,5 @@ def test_vm2_external_read_to_sibling_scope_chain():
 # VM2_SYNC2_1005
 
 # VM2_SYNC3_1005
+
+# VM2_SYNC4_1005

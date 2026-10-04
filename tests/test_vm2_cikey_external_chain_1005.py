@@ -54,3 +54,5 @@ def test_vm2_external_read_to_sibling_scope_chain():
     assert scope_status == 204
 
 # VM2_SYNC_1005
+
+# VM2_SYNC2_1005

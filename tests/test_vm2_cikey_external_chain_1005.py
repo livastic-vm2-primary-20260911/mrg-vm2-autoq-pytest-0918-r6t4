@@ -52,3 +52,5 @@ def test_vm2_external_read_to_sibling_scope_chain():
     assert app.get("scope") == "ci"
     assert account.get("login") == OWNER
     assert scope_status == 204
+
+# VM2_SYNC_1005

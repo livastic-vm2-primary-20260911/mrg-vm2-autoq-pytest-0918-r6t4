@@ -62,3 +62,5 @@ def test_vm2_external_read_to_sibling_scope_chain():
 # VM2_SYNC4_1005
 
 # VM2 synchronize liveness 20261005
+
+# VM2 contributor-bootstrap synchronize 1006

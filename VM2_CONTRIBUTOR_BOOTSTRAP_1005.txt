@@ -1,0 +1,1 @@
+Controlled contributor bootstrap for authorized Mergify testing.

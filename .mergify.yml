@@ -1,1 +1,25 @@
-extends: mrg-vm2-deployfresh-0918-d7k3
+merge_queue:
+  mode: serial
+
+queue_rules:
+  - name: VM2 CI key external chain 1005
+    queue_conditions:
+      - base = main
+      - title = VM2_CIKEY_SYNTH_CHAIN_1005
+    merge_conditions:
+      - check-success = vm2-never-pass-cikey-chain-1005
+    merge_method: merge
+    autoqueue: true
+
+commands_restrictions:
+  queue:
+    conditions:
+      - sender-permission >= write
+
+pull_request_rules:
+  - name: VM2_PRIVATE_EXTENDS_MARKER_0920
+    conditions:
+      - title = VM2_PRIVATE_EXTENDS_NEVER_0920
+    actions:
+      comment:
+        message: VM2 private extends visibility marker 0920

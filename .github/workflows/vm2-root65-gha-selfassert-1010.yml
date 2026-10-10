@@ -1,0 +1,43 @@
+name: VM2 Root65 GHA Self-Assert Counterfactual 1010
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install current Mergify CLI
+        run: python -m pip install --disable-pip-version-check 'mergify-cli==2026.10.5'
+      - name: Create harmless JUnit pass
+        shell: bash
+        run: |
+          cat > /tmp/vm2-root65-pass.xml <<'XML'
+          <testsuite name="vm2-root65-selfassert-suite" tests="1" failures="0">
+            <testcase classname="VM2Root65SelfAssert1010" name="pass" time="0.01"/>
+          </testsuite>
+          XML
+      - name: Upload controlled self-asserted GHA telemetry
+        shell: bash
+        env:
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+          GITHUB_ACTIONS: 'true'
+          GITHUB_WORKFLOW: 'VM2_FORGED_GHA_PIPELINE_1010'
+          GITHUB_JOB: 'vm2-forged-gha-counterfactual-1010'
+          GITHUB_RUN_ID: '991010010001'
+          GITHUB_RUN_ATTEMPT: '1'
+          GITHUB_SHA: 'e39c685ead668371965d3a0e9b87fa1c9dd58bbf'
+          GITHUB_REF_NAME: 'vm2-forged-gha-ref-1010'
+          GITHUB_EVENT_NAME: 'workflow_dispatch'
+          RUNNER_NAME: 'vm2-forged-runner-1010'
+          MERGIFY_TEST_JOB_NAME: 'vm2-forged-gha-counterfactual-1010'
+        run: |
+          mergify --version
+          mergify ci junit-process /tmp/vm2-root65-pass.xml \
+            --repository vm2-billing-checkout-v7m3-260916/mrg-vm2-autoq-pytest-0918-r6t4 \
+            --tests-target-branch main \
+            --test-framework pytest \
+            --test-language python
